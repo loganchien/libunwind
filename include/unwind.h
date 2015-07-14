@@ -214,6 +214,12 @@ extern void _Unwind_SetIP(struct _Unwind_Context *, uintptr_t new_value);
 
 #else  // LIBCXXABI_ARM_EHABI
 
+#if !defined(__LIBUNWIND_DONT_INLINE_UNWIND_LEVEL1)
+#define __LIBUNWIND_EXPORT_UNWIND_LEVEL1 static __inline__
+#else
+#define __LIBUNWIND_EXPORT_UNWIND_LEVEL1 extern
+#endif
+
 // These are de facto helper functions for ARM, which delegate the function
 // calls to _Unwind_VRS_Get/Set().  These are not a part of ARM EHABI
 // specification, thus these function MUST be inlined.  Please don't replace
@@ -221,25 +227,27 @@ extern void _Unwind_SetIP(struct _Unwind_Context *, uintptr_t new_value);
 // including this <unwind.h> header won't be ABI compatible and will result in
 // link error when we are linking the program with libgcc.
 
-static __inline__ uintptr_t _Unwind_GetGR(struct _Unwind_Context *context,
-                                          int index) {
+__LIBUNWIND_EXPORT_UNWIND_LEVEL1
+uintptr_t _Unwind_GetGR(struct _Unwind_Context *context, int index) {
   uintptr_t value = 0;
   _Unwind_VRS_Get(context, _UVRSC_CORE, (uint32_t)index, _UVRSD_UINT32, &value);
   return value;
 }
 
-static __inline__ void _Unwind_SetGR(struct _Unwind_Context *context,
-                                     int index, uintptr_t value) {
+__LIBUNWIND_EXPORT_UNWIND_LEVEL1
+void _Unwind_SetGR(struct _Unwind_Context *context, int index,
+                   uintptr_t value) {
   _Unwind_VRS_Set(context, _UVRSC_CORE, (uint32_t)index, _UVRSD_UINT32, &value);
 }
 
-static __inline__ uintptr_t _Unwind_GetIP(struct _Unwind_Context *context) {
+__LIBUNWIND_EXPORT_UNWIND_LEVEL1
+uintptr_t _Unwind_GetIP(struct _Unwind_Context *context) {
   // remove the thumb-bit before returning
   return _Unwind_GetGR(context, 15) & (~(uintptr_t)0x1);
 }
 
-static __inline__ void _Unwind_SetIP(struct _Unwind_Context *context,
-                                     uintptr_t value) {
+__LIBUNWIND_EXPORT_UNWIND_LEVEL1
+void _Unwind_SetIP(struct _Unwind_Context *context, uintptr_t value) {
   uintptr_t thumb_bit = _Unwind_GetGR(context, 15) & ((uintptr_t)0x1);
   _Unwind_SetGR(context, 15, value | thumb_bit);
 }
